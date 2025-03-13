@@ -36,8 +36,8 @@
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <string.h>
 #include <stdint.h>
+#include <string.h>
 
 enum {
     /* Grow threshold */
