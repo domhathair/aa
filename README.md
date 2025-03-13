@@ -7,6 +7,10 @@ insertion, deletion, and lookup operations.
 ### Note
 This library is essentially a direct port of [nogcaa](https://github.com/domhathair/nogcaa) to C.
 
+### Compatibility
+This library utilizes features specific to the C11 and C23 standards, such as `_Generic` and `typeof_unqual`.
+It is recommended to use the latest versions of compilers that support these features to ensure compatibility.
+
 ### Features
 - Dynamic resizing of the hash table to maintain performance.
 - Support for custom key and value types.
@@ -61,4 +65,21 @@ int main(void) {
 
     return 0;
 }
+```
+
+## How to build PlatformIO based project
+
+1. [Install PlatformIO Core](https://docs.platformio.org/page/core.html)
+2. Сlone this repository
+3. Run these commands:
+
+```shell
+# Build project
+$ pio run
+
+# Run tests
+$ pio test --verbose --environment linux
+
+# Clean build files
+$ pio run --target clean
 ```

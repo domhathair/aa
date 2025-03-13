@@ -76,12 +76,20 @@ struct aa_node {
         value;
 };
 
-#if __STDC_VERSION__ >= 201904L
+#if __STDC_VERSION__ >= 201904L && __STDC_VERSION__ < 202000L
+#define AA_KEY_T typeof((struct aa_node){}.key)
+#define AA_VALUE_T typeof((struct aa_node){}.value)
+#elif __STDC_VERSION__ >= 202000L
 #define AA_KEY_T typeof_unqual((struct aa_node){}.key)
 #define AA_VALUE_T typeof_unqual((struct aa_node){}.value)
 #else
 #error "C23 or later required"
 #endif /* __STDC_VERSION__ */
+
+/* Defined by user, specified by machine word size */
+#ifndef WORD_SIZE
+#define WORD_SIZE 8
+#endif /* WORD_SIZE */
 
 struct aa_bucket {
     size_t hash;
@@ -306,8 +314,6 @@ static size_t calc_hash(AA_KEY_T key) {
 #define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2 * !!(condition)]))
 #endif /* BUILD_BUG_ON */
 
-/* Defined by user */
-#define WORD_SIZE 8
     BUILD_BUG_ON(sizeof(size_t) != WORD_SIZE);
 
     size_t hash;
