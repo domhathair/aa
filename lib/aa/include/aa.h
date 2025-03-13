@@ -37,6 +37,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdint.h>
 
 enum {
     /* Grow threshold */
@@ -82,8 +83,17 @@ struct aa_node {
 #elif __STDC_VERSION__ >= 202000L
 #define AA_K typeof_unqual((struct aa_node){}.key)
 #define AA_V typeof_unqual((struct aa_node){}.value)
-
+#if !defined(_WIN32) && !defined(_WIN64)
 #include <stdbit.h>
+#else
+#ifndef SIZE_WIDTH
+#define SIZE_WIDTH 64
+[[maybe_unused]] static void test_size_width(void) {
+    (void)sizeof(char[(sizeof(size_t) * CHAR_BIT == SIZE_WIDTH) > 0 ? 1 : -1]);
+    return;
+}
+#endif /* SIZE_WIDTH */
+#endif /* _WIN32 && _WIN64 */
 #else
 #error "C23 or later required"
 #endif /* __STDC_VERSION__ */
@@ -242,7 +252,7 @@ static size_t bsr(size_t v) {
         return 0;
 
     size_t bit_position = SIZE_WIDTH;
-#if __STDC_VERSION__ >= 202000L
+#if __STDC_VERSION__ >= 202000L && defined(_STDBIT_H)
     return bit_position - stdc_first_leading_one(v);
 #else
     for (; bit_position > 0; bit_position--)
