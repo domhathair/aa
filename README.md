@@ -27,10 +27,10 @@ It is recommended to use the latest versions of compilers that support these fea
 #### Functions
 - `struct aa *aa_new(void)`: Creates a new hash table.
 - `void aa_free(struct aa *a)`: Frees the memory allocated for the hash table.
-- `int aa_set(struct aa *a, AA_KEY_T key, AA_VALUE_T value)`: Inserts or updates a key-value pair in the hash table.
-- `AA_VALUE_T aa_get(struct aa *a, AA_KEY_T key)`: Retrieves the value associated with a key.
+- `int aa_set(struct aa *a, AA_K key, AA_V value)`: Inserts or updates a key-value pair in the hash table.
+- `AA_V aa_get(struct aa *a, AA_K key)`: Retrieves the value associated with a key.
 - `int aa_rehash(struct aa *a)`: Rehashes the hash table to improve performance.
-- `bool aa_remove(struct aa *a, AA_KEY_T key)`: Removes a key-value pair from the hash table.
+- `bool aa_remove(struct aa *a, AA_K key)`: Removes a key-value pair from the hash table.
 - `void aa_clear(struct aa *a)`: Clears all key-value pairs from the hash table.
 - `size_t aa_len(struct aa *a)`: Returns the number of buckets in the hash table.
 

@@ -77,19 +77,16 @@ struct aa_node {
 };
 
 #if __STDC_VERSION__ >= 201904L && __STDC_VERSION__ < 202000L
-#define AA_KEY_T typeof((struct aa_node){}.key)
-#define AA_VALUE_T typeof((struct aa_node){}.value)
+#define AA_K typeof((struct aa_node){}.key)
+#define AA_V typeof((struct aa_node){}.value)
 #elif __STDC_VERSION__ >= 202000L
-#define AA_KEY_T typeof_unqual((struct aa_node){}.key)
-#define AA_VALUE_T typeof_unqual((struct aa_node){}.value)
+#define AA_K typeof_unqual((struct aa_node){}.key)
+#define AA_V typeof_unqual((struct aa_node){}.value)
+
+#include <stdbit.h>
 #else
 #error "C23 or later required"
 #endif /* __STDC_VERSION__ */
-
-/* Defined by user, specified by machine word size */
-#ifndef WORD_SIZE
-#define WORD_SIZE 8
-#endif /* WORD_SIZE */
 
 struct aa_bucket {
     size_t hash;
@@ -103,10 +100,10 @@ struct aa {
 
 extern struct aa *aa_new(void);
 extern void aa_free(struct aa *);
-extern int aa_set(struct aa *, AA_KEY_T, AA_VALUE_T);
-extern AA_VALUE_T aa_get(struct aa *, AA_KEY_T);
+extern int aa_set(struct aa *, AA_K, AA_V);
+extern AA_V aa_get(struct aa *, AA_K);
 extern int aa_rehash(struct aa *);
-extern bool aa_remove(struct aa *, AA_KEY_T);
+extern bool aa_remove(struct aa *, AA_K);
 extern void aa_clear(struct aa *);
 extern size_t aa_len(struct aa *);
 
@@ -117,62 +114,23 @@ extern size_t aa_len(struct aa *);
 #define IS_POINTER(x)                                                                                                  \
     _Generic((x),                                                                                                      \
         bool: 0,                                                                                                       \
-        const bool: 0,                                                                                                 \
-        volatile bool: 0,                                                                                              \
-        const volatile bool: 0,                                                                                        \
         unsigned char: 0,                                                                                              \
-        const unsigned char: 0,                                                                                        \
-        volatile unsigned char: 0,                                                                                     \
-        const volatile unsigned char: 0,                                                                               \
         signed char: 0,                                                                                                \
-        const signed char: 0,                                                                                          \
-        volatile signed char: 0,                                                                                       \
-        const volatile signed char: 0,                                                                                 \
         unsigned short: 0,                                                                                             \
-        const unsigned short: 0,                                                                                       \
-        volatile unsigned short: 0,                                                                                    \
-        const volatile unsigned short: 0,                                                                              \
         signed short: 0,                                                                                               \
-        const signed short: 0,                                                                                         \
-        volatile signed short: 0,                                                                                      \
-        const volatile signed short: 0,                                                                                \
         unsigned int: 0,                                                                                               \
-        const unsigned int: 0,                                                                                         \
-        volatile unsigned int: 0,                                                                                      \
-        const volatile unsigned int: 0,                                                                                \
         signed int: 0,                                                                                                 \
-        const signed int: 0,                                                                                           \
-        volatile signed int: 0,                                                                                        \
-        const volatile signed int: 0,                                                                                  \
         unsigned long: 0,                                                                                              \
-        const unsigned long: 0,                                                                                        \
-        volatile unsigned long: 0,                                                                                     \
-        const volatile unsigned long: 0,                                                                               \
         signed long: 0,                                                                                                \
-        const signed long: 0,                                                                                          \
-        volatile signed long: 0,                                                                                       \
-        const volatile signed long: 0,                                                                                 \
         unsigned long long: 0,                                                                                         \
-        const unsigned long long: 0,                                                                                   \
-        volatile unsigned long long: 0,                                                                                \
-        const volatile unsigned long long: 0,                                                                          \
         signed long long: 0,                                                                                           \
-        const signed long long: 0,                                                                                     \
-        volatile signed long long: 0,                                                                                  \
-        const volatile signed long long: 0,                                                                            \
         float: 0,                                                                                                      \
-        const float: 0,                                                                                                \
-        volatile float: 0,                                                                                             \
-        const volatile float: 0,                                                                                       \
         double: 0,                                                                                                     \
-        const double: 0,                                                                                               \
-        volatile double: 0,                                                                                            \
-        const volatile double: 0,                                                                                      \
         long double: 0,                                                                                                \
-        const long double: 0,                                                                                          \
-        volatile long double: 0,                                                                                       \
-        const volatile long double: 0,                                                                                 \
-        default: 1)
+        unsigned char *: 1,                                                                                            \
+        signed char *: 1,                                                                                              \
+        char *: 1,                                                                                                     \
+        default: assert(0))
 
 static int alloc_htable(struct aa *a, size_t sz) {
     if (a == NULL)
@@ -257,14 +215,14 @@ static struct aa_bucket *find_slot_insert(struct aa *a, size_t hash) {
     }
 }
 
-static inline bool equals(AA_KEY_T k1, AA_KEY_T k2) {
+static inline bool equals(AA_K k1, AA_K k2) {
     if (IS_POINTER(k2) == 0)
         return k1 == k2;
     else
         return strcmp((const char *)k1, (const char *)k2) == 0;
 }
 
-static struct aa_bucket *find_slot_lookup(struct aa *a, size_t hash, AA_KEY_T key) {
+static struct aa_bucket *find_slot_lookup(struct aa *a, size_t hash, AA_K key) {
     if (a == NULL)
         return NULL;
 
@@ -279,18 +237,20 @@ static struct aa_bucket *find_slot_lookup(struct aa *a, size_t hash, AA_KEY_T ke
     }
 }
 
-static int bsr(size_t v) {
+static size_t bsr(size_t v) {
     if (v == 0)
         return 0;
 
-    int bit_position = sizeof(size_t) * CHAR_BIT - 1;
-    while (bit_position >= 0) {
-        if ((v & ((size_t)1 << bit_position)) != 0)
-            return bit_position;
+    size_t bit_position = SIZE_WIDTH;
+#if __STDC_VERSION__ >= 202000L
+    return bit_position - stdc_first_leading_one(v);
+#else
+    for (; bit_position > 0; bit_position--)
+        if ((v & ((size_t)1 << (bit_position - 1))) != 0)
+            return bit_position - 1;
 
-        bit_position--;
-    }
     return 0;
+#endif /* __STDC_VERSION__ */
 }
 
 static size_t nextpow2(size_t n) {
@@ -309,43 +269,14 @@ static size_t mix(size_t h) {
     return h;
 }
 
-static size_t calc_hash(AA_KEY_T key) {
-#ifndef BUILD_BUG_ON
-#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2 * !!(condition)]))
-#endif /* BUILD_BUG_ON */
+static size_t calc_hash(AA_K key) {
+#define CRC CRC_TRANSITIVE(SIZE_WIDTH)
+#define CRC_TRANSITIVE(width) CRC_IMPLEMENTATION(width)
+#define CRC_IMPLEMENTATION(width)                                                                                      \
+    IS_POINTER(key) == 0 ? crc##width(SIZE_MAX, &key, sizeof(key))                                                     \
+                         : crc##width(SIZE_MAX, (const char *)key, strlen((const char *)key))
 
-    BUILD_BUG_ON(sizeof(size_t) != WORD_SIZE);
-
-    size_t hash;
-    if (IS_POINTER(key) == 0) {
-        hash =
-#if WORD_SIZE == 1
-            crc8(MAXIM_CRC, &key, sizeof(key));
-#elif WORD_SIZE == 2
-            crc16(MODBUS_CRC, &key, sizeof(key));
-#elif WORD_SIZE == 4
-            crc32(MPEG2_CRC, &key, sizeof(key));
-#elif WORD_SIZE == 8
-            crc64(JONES_CRC, &key, sizeof(key));
-#else
-#error "Unsupported type size"
-#endif /* sizeof(size_t) */
-    } else {
-        hash =
-#if WORD_SIZE == 1
-            crc8(MAXIM_CRC, (const char *)key, strlen((const char *)key));
-#elif WORD_SIZE == 2
-            crc16(MODBUS_CRC, (const char *)key, strlen((const char *)key));
-#elif WORD_SIZE == 4
-            crc32(MPEG2_CRC, (const char *)key, strlen((const char *)key));
-#elif WORD_SIZE == 8
-            crc64(JONES_CRC, (const char *)key, strlen((const char *)key));
-#else
-#error "Unsupported size_t size"
-#endif /* sizeof(size_t) */
-    }
-
-    return mix(hash) | AA_HASH_FILLED_MARK;
+    return mix(CRC) | AA_HASH_FILLED_MARK;
 }
 
 static void clear_entry(struct aa_bucket *b) {
@@ -414,7 +345,7 @@ static int assign_key_ptr(struct aa_node *p, void *key) {
     if (p == NULL || key == NULL)
         return -1;
 
-    p->key = (AA_KEY_T)__malloc(strlen((const char *)key) + 1);
+    p->key = (AA_K)__malloc(strlen((const char *)key) + 1);
     if ((void *)p->key == NULL)
         return -1;
     strcpy((char *)p->key, (const char *)key);
@@ -446,7 +377,7 @@ extern void aa_free(struct aa *a) {
     return;
 }
 
-extern int aa_set(struct aa *a, AA_KEY_T key, AA_VALUE_T value) {
+extern int aa_set(struct aa *a, AA_K key, AA_V value) {
     if (a == NULL)
         return -1;
 
@@ -504,15 +435,15 @@ extern int aa_set(struct aa *a, AA_KEY_T key, AA_VALUE_T value) {
     return 0;
 }
 
-extern AA_VALUE_T aa_get(struct aa *a, AA_KEY_T key) {
+extern AA_V aa_get(struct aa *a, AA_K key) {
     if (a == NULL)
-        return NULL;
+        return (AA_V)NULL;
 
     struct aa_bucket *b = find_slot_lookup(a, calc_hash(key), key);
     if (b != NULL)
         return b->entry->value;
 
-    return NULL;
+    return (AA_V)NULL;
 }
 
 extern int aa_rehash(struct aa *a) {
@@ -525,7 +456,7 @@ extern int aa_rehash(struct aa *a) {
     return 0;
 }
 
-extern bool aa_remove(struct aa *a, AA_KEY_T key) {
+extern bool aa_remove(struct aa *a, AA_K key) {
     if (a == NULL)
         return false;
 

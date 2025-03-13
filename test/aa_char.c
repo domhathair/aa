@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef TEST_AA_CHAR
+
 #define AA_KEY char *
 #define AA_VALUE char *
 #define AA_IMPLEMENTATION
@@ -51,3 +53,5 @@ int main(void) {
 
     return 0;
 }
+
+#endif /* TEST_AA_CHAR */
