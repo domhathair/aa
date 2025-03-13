@@ -78,15 +78,14 @@ struct aa_node {
 
 #if __STDC_VERSION__ >= 201904L && __STDC_VERSION__ < 202000L
 #define AA_K typeof((struct aa_node){}.key)
-#define AA_V typeof((struct aa_node){}.value)
 #elif __STDC_VERSION__ >= 202000L
 #define AA_K typeof_unqual((struct aa_node){}.key)
-#define AA_V typeof_unqual((struct aa_node){}.value)
 
 #include <stdbit.h>
 #else
 #error "C23 or later required"
 #endif /* __STDC_VERSION__ */
+#define AA_V AA_VALUE
 
 struct aa_bucket {
     size_t hash;
@@ -437,13 +436,13 @@ extern int aa_set(struct aa *a, AA_K key, AA_V value) {
 
 extern AA_V aa_get(struct aa *a, AA_K key) {
     if (a == NULL)
-        return (AA_V)NULL;
+        return (struct aa_node){.key = (AA_K)NULL}.value;
 
     struct aa_bucket *b = find_slot_lookup(a, calc_hash(key), key);
-    if (b != NULL)
+    if (b != NULL && filled(b) == true)
         return b->entry->value;
 
-    return (AA_V)NULL;
+    return (struct aa_node){.key = (AA_K)NULL}.value;
 }
 
 extern int aa_rehash(struct aa *a) {
