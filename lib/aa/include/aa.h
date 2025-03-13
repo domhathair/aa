@@ -79,7 +79,12 @@ struct aa_node {
 #define AA_K typeof_unqual((struct aa_node){}.key)
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <stdbit.h>
+#endif /* _WIN32 && _WIN64 */
 #else
+#error "C23 or later required"
+#endif /* __STDC_VERSION__ */
+#define AA_V AA_VALUE
+
 #ifndef SIZE_WIDTH
 #define SIZE_WIDTH 64
 [[maybe_unused]] static void test_size_width(void) {
@@ -87,11 +92,6 @@ struct aa_node {
     return;
 }
 #endif /* SIZE_WIDTH */
-#endif /* _WIN32 && _WIN64 */
-#else
-#error "C23 or later required"
-#endif /* __STDC_VERSION__ */
-#define AA_V AA_VALUE
 
 struct aa_bucket {
     size_t hash;
