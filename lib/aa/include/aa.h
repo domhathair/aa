@@ -63,18 +63,14 @@ enum {
 
 struct aa_node {
 #ifndef AA_KEY
-    size_t
-#else
-    AA_KEY
+#define AA_KEY size_t
 #endif /* AA_KEY */
-        key;
+    AA_KEY key;
 
 #ifndef AA_VALUE
-    void *
-#else
-    AA_VALUE
+#define AA_VALUE void *
 #endif /* AA_VALUE */
-        value;
+    AA_VALUE value;
 };
 
 #if __STDC_VERSION__ >= 201904L && __STDC_VERSION__ < 202000L
