@@ -441,7 +441,7 @@ extern int aa_set(struct aa *a, AA_K key, AA_V value) {
 }
 
 extern AA_V aa_get(struct aa *a, AA_K key) {
-    if (a == NULL)
+    if (a == NULL || a->buckets == NULL)
         return (struct aa_node){.key = (AA_K)NULL}.value;
 
     struct aa_bucket *b = find_slot_lookup(a, calc_hash(key), key);
