@@ -115,6 +115,8 @@ extern size_t aa_len(struct aa *);
 #endif /* aa_h */
 
 #ifdef AA_IMPLEMENTATION
+#ifndef AA_IMPLEMENTED
+#define AA_IMPLEMENTED
 
 #define IS_POINTER(x)                                                                                                  \
     _Generic((x),                                                                                                      \
@@ -506,4 +508,5 @@ extern size_t aa_len(struct aa *a) {
     return dim(a->buckets);
 }
 
+#endif /* AA_IMPLEMENTED */
 #endif /* AA_IMPLEMENTATION */
