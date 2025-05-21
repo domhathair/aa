@@ -27,8 +27,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef aa_h
-#define aa_h
+#ifndef AA_H
+#define AA_H
 
 #include "alloc.h"
 #include "crc.h"
@@ -112,7 +112,7 @@ extern bool aa_remove(struct aa *, AA_K);
 extern void aa_clear(struct aa *);
 extern size_t aa_len(struct aa *);
 
-#endif /* aa_h */
+#endif /* AA_H */
 
 #ifdef AA_IMPLEMENTATION
 #ifndef AA_IMPLEMENTED
