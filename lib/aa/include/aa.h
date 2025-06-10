@@ -454,7 +454,8 @@ extern int aa_get(struct aa *a, ...) {
 
     struct aa_bucket *b = find_slot_lookup(a, calc_hash(key), key);
     if (b && filled(b)) {
-        *value = b->entry->value;
+        if (value)
+            *value = b->entry->value;
         return 0;
     }
 
