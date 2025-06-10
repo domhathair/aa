@@ -7,7 +7,7 @@
 #ifdef TEST_AA_STRUCT
 
 struct person {
-    size_t age, height;
+    unsigned char age, height;
     bool gender;
 };
 
@@ -28,17 +28,22 @@ int main(void) {
 
     for (size_t i = 0; i < aa_len(a); i++)
         if (a->buckets[i].entry != NULL)
-            printf("%s -> age: %zu, height: %zu\n", a->buckets[i].entry->key, a->buckets[i].entry->value.age,
+            printf("%s -> age: %hhu, height: %hhu\n", a->buckets[i].entry->key, a->buckets[i].entry->value.age,
                    a->buckets[i].entry->value.height);
 
-    printf("Maria is %zu years old\n", aa_get(a, "Maria").age);
-    printf("Alexander's height is %zu\n", aa_get(a, "Alexander").height);
-    printf("Valentina is %s\n", aa_get(a, "Valentina").age == MALE ? "male" : "female");
+    AA_VALUE value;
+    assert(aa_get(a, "Maria", &value) == 0);
+    printf("Maria is %hhu years old\n", value.age);
+    assert(aa_get(a, "Alexander", &value) == 0);
+    printf("Alexander's height is %hhu\n", value.height);
+    assert(aa_get(a, "Valentina", &value) == 0);
+    printf("Valentina is %s\n", value.gender == MALE ? "male" : "female");
 
     printf("Heap of a[%zu]: %lu\n", a->used, __memory);
 
-    aa_remove(a, "Maria");
-    printf("Maria is %s\n", aa_get(a, "Maria").age == 0 ? "gone...\vThink about Maria...\vRegret..." : "still here!");
+    assert(aa_remove(a, "Maria") == true);
+    printf("Maria is %s\n",
+           aa_get(a, "Maria", &value) != 0 ? "gone...\vThink about Maria...\vRegret..." : "still here!");
 
     aa_free(a);
 
