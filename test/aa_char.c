@@ -47,7 +47,7 @@ int main(void) {
     printf("%s\n", aa_get(a, "Ferhat", &value) == 0 ? value : "(null)");
     printf("%s\n", aa_get(a, "Что-то, чего точно нет", &value) == 0 ? value : "(null)");
 
-    aa_free(a);
+    aa_delete(a);
 
     assert(__memory == 0);
 

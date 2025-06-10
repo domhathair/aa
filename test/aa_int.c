@@ -39,7 +39,7 @@ int main(void) {
     assert(aa_get(a, 1000, &value) == 0);
     printf("a[1000]: %d\n", value);
 
-    aa_free(a);
+    aa_delete(a);
 
     assert(__memory == 0);
 

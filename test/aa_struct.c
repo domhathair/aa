@@ -45,7 +45,7 @@ int main(void) {
     printf("Maria is %s\n",
            aa_get(a, "Maria", &value) != 0 ? "gone...\vThink about Maria...\vRegret..." : "still here!");
 
-    aa_free(a);
+    aa_delete(a);
 
     assert(__memory == 0);
 

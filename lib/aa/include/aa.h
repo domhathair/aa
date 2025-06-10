@@ -76,7 +76,7 @@ struct aa {
 };
 
 extern struct aa *aa_new(void);
-extern void aa_free(struct aa *);
+extern void aa_delete(struct aa *);
 extern int aa_set(struct aa *, ... /* key, value */);
 extern int aa_get(struct aa *, ... /* key, &value */);
 extern int aa_rehash(struct aa *);
@@ -370,7 +370,7 @@ extern struct aa *aa_new(void) {
     return a;
 }
 
-extern void aa_free(struct aa *a) {
+extern void aa_delete(struct aa *a) {
     if (!a)
         return;
 

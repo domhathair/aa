@@ -40,7 +40,7 @@ int main(void) {
         printf("%.lf %s %.lf = %g\n", b, op_name[i], c, op(b, c));
     }
 
-    aa_free(a);
+    aa_delete(a);
 
     assert(__memory == 0);
 
