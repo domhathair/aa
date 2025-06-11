@@ -106,9 +106,9 @@ struct aa_node {
 #define AA_K typeof((struct aa_node){}.key)
 #elif __STDC_VERSION__ >= 202000L
 #define AA_K typeof_unqual((struct aa_node){}.key)
-#if !defined(_WIN32) && !defined(_WIN64)
+#if (__linux__)
 #include <stdbit.h>
-#endif /* _WIN32 && _WIN64 */
+#endif /* __linux__ */
 #else
 #error "C23 or later required"
 #endif /* __STDC_VERSION__ */
