@@ -13,7 +13,7 @@
 
 int main(void) {
     struct aa *a = aa_new();
-    assert(a != NULL);
+    assert(a);
 
     aa_set(a, "Stevie", "Ray Vaughan");
     aa_set(a, "Asım Can", "Gündüz");
@@ -23,7 +23,7 @@ int main(void) {
     aa_set(a, "Ferhat", "Kurtulmuş");
 
     for (size_t i = 0; i < aa_len(a); i++)
-        if (a->buckets[i].entry != NULL)
+        if (a->buckets[i].entry)
             printf("%s -> %s\n", a->buckets[i].entry->key, a->buckets[i].entry->value);
 
     AA_VALUE value;

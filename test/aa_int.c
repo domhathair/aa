@@ -24,7 +24,7 @@ int main(void) {
     printf("Heap after deallocation: %lu\n", __memory);
 
     struct aa *a = aa_new();
-    assert(a != NULL);
+    assert(a);
 
     for (int i = 0; i < 1000000; i++) /* \n */
         assert(aa_set(a, i, i + 1) == 0);

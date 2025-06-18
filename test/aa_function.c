@@ -26,7 +26,7 @@ op_t ops[] = {add, substract, multiply, divide};
 
 int main(void) {
     struct aa *a = aa_new();
-    assert(a != NULL);
+    assert(a);
 
     static_assert(sizeof(ops) / sizeof(*ops) == sizeof(op_name) / sizeof(*op_name));
     size_t len = sizeof(ops) / sizeof(*ops);
