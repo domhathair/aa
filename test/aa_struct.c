@@ -22,9 +22,9 @@ int main(void) {
     struct aa *a = aa_new();
     assert(a);
 
-    aa_set(a, "Alexander", (const struct person){.age = 26, .height = 180, .gender = MALE});
-    aa_set(a, "Valentina", (const struct person){.age = 27, .height = 153, .gender = FEMALE});
-    aa_set(a, "Maria", (const struct person){.age = 26, .height = 172, .gender = FEMALE});
+    aa_set(a, "Alexander", ((const struct person){.age = 26, .height = 180, .gender = MALE}));
+    aa_set(a, "Valentina", ((const struct person){.age = 27, .height = 153, .gender = FEMALE}));
+    aa_set(a, "Maria", ((const struct person){.age = 26, .height = 172, .gender = FEMALE}));
 
     for (size_t i = 0; i < aa_len(a); i++)
         if (a->buckets[i].entry)

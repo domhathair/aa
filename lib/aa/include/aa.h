@@ -41,6 +41,9 @@
 #include "alloc.h"
 #include "crc.h"
 
+/**
+ * @brief Enumeration for hash table constants
+ */
 enum {
     /* Grow threshold */
     AA_GROW_NUM = 4,
@@ -63,26 +66,96 @@ enum {
     AA_HASH_FILLED_MARK = (size_t)1 << (CHAR_BIT * sizeof(size_t) - 1)
 };
 
-struct aa_node; /* Forward declaration */
+/**
+ * @brief Forward declaration of the aa_node structure
+ */
+struct aa_node;
 
+/**
+ * @brief Structure representing a bucket in the hash table
+ */
 struct aa_bucket {
     size_t hash;
     struct aa_node *entry;
 };
 
+/**
+ * @brief Structure representing the hash table
+ */
 struct aa {
     struct aa_bucket *buckets;
     size_t used, deleted;
 };
 
+/**
+ * @brief Creates a new hash table
+ *
+ * @return A pointer to the newly created hash table, or NULL if the allocation fails
+ */
 extern struct aa *aa_new(void);
+
+/**
+ * @brief Deletes a hash table and frees its memory
+ *
+ * @param aa A pointer to the hash table to be deleted
+ */
 extern void aa_delete(struct aa *);
-extern int aa_set(struct aa *, ... /* key, value */);
-extern int aa_get(struct aa *, ... /* key, &value */);
+
+/**
+ * @brief Sets a key-value pair in the hash table
+ *
+ * @param aa A pointer to the hash table
+ * @param key The key to be set
+ * @param value The value to be associated with the key
+ * @return 0 on success, -1 on failure.
+ */
+#define aa_set(aa, key, value) aa_x_set(aa, key, value)
+
+/**
+ * @brief Gets the value associated with a key in the hash table
+ *
+ * @param aa A pointer to the hash table
+ * @param key The key whose value is to be retrieved
+ * @param value A pointer to the variable where the value will be stored
+ * @return 0 on success, -1 on failure
+ */
+#define aa_get(aa, key, value) aa_x_get(aa, key, value)
+
+/**
+ * @brief Removes a key-value pair from the hash table
+ *
+ * @param aa A pointer to the hash table
+ * @param key The key to be removed
+ * @return 0 on success, -1 on failure
+ */
+#define aa_remove(aa, key) aa_x_remove(aa, key)
+
+/**
+ * @brief Rehashes the hash table to a new size
+ *
+ * @param aa A pointer to the hash table
+ * @return 0 on success, -1 on failure
+ */
 extern int aa_rehash(struct aa *);
-extern bool aa_remove(struct aa *, ... /* key */);
+
+/**
+ * @brief Clears all key-value pairs from the hash table
+ *
+ * @param aa A pointer to the hash table
+ */
 extern void aa_clear(struct aa *);
+
+/**
+ * @brief Gets the number of key-value pairs in the hash table
+ *
+ * @param a A pointer to the hash table
+ * @return The number of key-value pairs in the hash table
+ */
 extern size_t aa_len(struct aa *);
+
+extern int aa_x_set(struct aa *, ... /* key, value */);
+extern int aa_x_get(struct aa *, ... /* key, &value */);
+extern bool aa_x_remove(struct aa *, ... /* key */);
 
 #endif /* AA_H */
 
@@ -379,7 +452,7 @@ extern void aa_delete(struct aa *a) {
     return;
 }
 
-extern int aa_set(struct aa *a, ...) {
+extern int aa_x_set(struct aa *a, ...) {
     va_list args;
     va_start(args);
     AA_K key = va_arg(args, AA_K);
@@ -442,7 +515,7 @@ extern int aa_set(struct aa *a, ...) {
     return 0;
 }
 
-extern int aa_get(struct aa *a, ...) {
+extern int aa_x_get(struct aa *a, ...) {
     va_list args;
     va_start(args);
     AA_K key = va_arg(args, AA_K);
@@ -472,7 +545,7 @@ extern int aa_rehash(struct aa *a) {
     return 0;
 }
 
-extern bool aa_remove(struct aa *a, ...) {
+extern bool aa_x_remove(struct aa *a, ...) {
     va_list args;
     va_start(args);
     AA_K key = va_arg(args, AA_K);
