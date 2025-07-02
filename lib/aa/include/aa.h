@@ -126,7 +126,7 @@ extern void aa_delete(struct aa *);
  *
  * @param aa A pointer to the hash table
  * @param key The key to be removed
- * @return 0 on success, -1 on failure
+ * @return true on success, false on failure
  */
 #define aa_remove(aa, key) aa_x_remove(aa, key)
 
