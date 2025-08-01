@@ -29,7 +29,7 @@ It is recommended to use the latest versions of compilers that support these fea
 - `void aa_delete(struct aa *a)`: Frees the memory allocated for the hash table.
 - `int aa_x_set(struct aa *a, ... /* key, value */)`: Inserts or updates a key-value pair in the hash table.
 - `int aa_x_get(struct aa *a, ... /* key, &value */)`: Retrieves the value associated with a key.
-- `bool aa_x_remove(struct aa *a, ... /* key */)`: Removes a key-value pair from the hash table.
+- `int aa_x_remove(struct aa *a, ... /* key */)`: Removes a key-value pair from the hash table.
 - `int aa_rehash(struct aa *a)`: Rehashes the hash table to improve performance.
 - `void aa_clear(struct aa *a)`: Clears all key-value pairs from the hash table.
 - `size_t aa_len(struct aa *a)`: Returns the number of buckets in the hash table.
@@ -57,7 +57,7 @@ int main(void) {
         if (a->buckets[i].entry)
             printf("%s -> %s\n", a->buckets[i].entry->key, a->buckets[i].entry->value);
 
-    AA_VALUE value;
+    value_t value;
     if (aa_get(a, "Dan", &value) != 0)
         printf("Dan does not exist!\n");
     else

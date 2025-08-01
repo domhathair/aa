@@ -31,7 +31,7 @@ int main(void) {
             printf("%s -> age: %hhu, height: %hhu\n", a->buckets[i].entry->key, a->buckets[i].entry->value.age,
                    a->buckets[i].entry->value.height);
 
-    AA_VALUE value;
+    value_t value;
     assert(aa_get(a, "Maria", &value) == 0);
     printf("Maria is %hhu years old\n", value.age);
     assert(aa_get(a, "Alexander", &value) == 0);
@@ -41,7 +41,7 @@ int main(void) {
 
     printf("Heap of a[%zu]: %lu\n", a->used, __memory);
 
-    assert(aa_remove(a, "Maria") == true);
+    assert(aa_remove(a, "Maria") == 0);
     printf("Maria is %s\n",
            aa_get(a, "Maria", &value) != 0 ? "gone...\vThink about Maria...\vRegret..." : "still here!");
 

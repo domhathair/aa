@@ -26,15 +26,15 @@ int main(void) {
         if (a->buckets[i].entry)
             printf("%s -> %s\n", a->buckets[i].entry->key, a->buckets[i].entry->value);
 
-    AA_VALUE value;
+    value_t value;
     if (aa_get(a, "Dan", &value) != 0)
         printf("Dan does not exist!\n");
     else
         printf("Dan %s exists!\n", value);
 
-    assert(aa_remove(a, "Ferhat") == true);
+    assert(aa_remove(a, "Ferhat") == 0);
     assert(aa_get(a, "Ferhat", &value) != 0);
-    assert(aa_remove(a, "Foe") == false);
+    assert(aa_remove(a, "Foe") != 0);
     assert(aa_get(a, "İlter", &value) == 0);
     assert(strcmp(value, "Kurcala") == 0);
 

@@ -90,7 +90,7 @@ struct aa {
 /**
  * @brief Creates a new hash table
  *
- * @return A pointer to the newly created hash table, or NULL if the allocation fails
+ * @return A pointer to the newly created hash table, or nullptr if the allocation fails
  */
 extern struct aa *aa_new(void);
 
@@ -126,7 +126,7 @@ extern void aa_delete(struct aa *);
  *
  * @param aa A pointer to the hash table
  * @param key The key to be removed
- * @return true on success, false on failure
+ * @return 0 on success, -1 on failure
  */
 #define aa_remove(aa, key) aa_x_remove(aa, key)
 
@@ -155,7 +155,7 @@ extern size_t aa_len(struct aa *);
 
 extern int aa_x_set(struct aa *, ... /* key, value */);
 extern int aa_x_get(struct aa *, ... /* key, &value */);
-extern bool aa_x_remove(struct aa *, ... /* key */);
+extern int aa_x_remove(struct aa *, ... /* key */);
 
 #endif /* AA_H */
 
@@ -163,29 +163,28 @@ extern bool aa_x_remove(struct aa *, ... /* key */);
 #ifndef AA_IMPLEMENTED
 #define AA_IMPLEMENTED
 
-struct aa_node {
 #ifndef AA_KEY
 #error "Please define AA_KEY type"
 #endif /* AA_KEY */
-    AA_KEY key;
 
 #ifndef AA_VALUE
 #error "Please define AA_VALUE type"
 #endif /* AA_VALUE */
-    AA_VALUE value;
-};
 
-#if __STDC_VERSION__ >= 201904L && __STDC_VERSION__ < 202000L
-#define AA_K typeof((struct aa_node){}.key)
-#elif __STDC_VERSION__ >= 202000L
-#define AA_K typeof_unqual((struct aa_node){}.key)
+#if __STDC_VERSION__ >= 202311L
+typedef typeof_unqual(AA_KEY) key_t;
+typedef typeof_unqual(AA_VALUE) value_t;
 #if (__linux__)
 #include <stdbit.h>
 #endif /* __linux__ */
 #else
 #error "C23 or later required"
 #endif /* __STDC_VERSION__ */
-#define AA_V AA_VALUE
+
+struct aa_node {
+    key_t key;
+    value_t value;
+};
 
 #ifndef SIZE_WIDTH
 #define SIZE_WIDTH 64
@@ -286,7 +285,7 @@ static size_t mask(struct aa *a) {
 
 static struct aa_bucket *find_slot_insert(struct aa *a, size_t hash) {
     if (!a || !a->buckets)
-        return NULL;
+        return nullptr;
 
     for (size_t m = mask(a), i = hash & m, j = 1;; j++) {
         if (!filled(&a->buckets[i]))
@@ -296,20 +295,20 @@ static struct aa_bucket *find_slot_insert(struct aa *a, size_t hash) {
     }
 }
 
-static inline bool equals(AA_K k1, AA_K k2) {
+static inline bool equals(key_t k1, key_t k2) {
     if (IS_POINTER(k2) == 0)
         return k1 == k2;
     else
         return strcmp((const char *)k1, (const char *)k2) == 0;
 }
 
-static struct aa_bucket *find_slot_lookup(struct aa *a, size_t hash, AA_K key) {
+static struct aa_bucket *find_slot_lookup(struct aa *a, size_t hash, key_t key) {
     if (!a || !a->buckets)
-        return NULL;
+        return nullptr;
 
     for (size_t m = mask(a), i = hash & m, j = 1;; j++) {
         if (empty(&a->buckets[i]))
-            return NULL;
+            return nullptr;
 
         if (a->buckets[i].hash == hash && equals(key, a->buckets[i].entry->key))
             return &a->buckets[i];
@@ -350,7 +349,7 @@ static size_t mix(size_t h) {
     return h;
 }
 
-static size_t calc_hash(AA_K key) {
+static size_t calc_hash(key_t key) {
 #define CRC CRC_TRANSITIVE(SIZE_WIDTH)
 #define CRC_TRANSITIVE(width) CRC_IMPLEMENTATION(width)
 #define CRC_IMPLEMENTATION(width)                                                                                      \
@@ -368,7 +367,7 @@ static void clear_entry(struct aa_bucket *b) {
         __free((void *)b->entry->key);
     __free(b->entry);
 
-    b->entry = NULL;
+    b->entry = nullptr;
 
     return;
 }
@@ -424,7 +423,7 @@ static int assign_key_ptr(struct aa_node *p, void *key) {
     if (!p || !key)
         return -1;
 
-    p->key = (AA_K)__malloc(strlen((const char *)key) + 1);
+    p->key = (key_t)__malloc(strlen((const char *)key) + 1);
     if (!(char *)p->key)
         return -1;
     strcpy((char *)p->key, (const char *)key);
@@ -435,9 +434,9 @@ static int assign_key_ptr(struct aa_node *p, void *key) {
 extern struct aa *aa_new(void) {
     struct aa *a = (struct aa *)__malloc(sizeof(struct aa));
     if (!a)
-        return NULL;
+        return nullptr;
 
-    a->buckets = NULL;
+    a->buckets = nullptr;
     a->deleted = a->used = 0;
 
     return a;
@@ -455,8 +454,8 @@ extern void aa_delete(struct aa *a) {
 extern int aa_x_set(struct aa *a, ...) {
     va_list args;
     va_start(args);
-    AA_K key = va_arg(args, AA_K);
-    AA_V value = va_arg(args, AA_V);
+    key_t key = va_arg(args, key_t);
+    value_t value = va_arg(args, value_t);
     va_end(args);
 
     if (!a)
@@ -518,8 +517,8 @@ extern int aa_x_set(struct aa *a, ...) {
 extern int aa_x_get(struct aa *a, ...) {
     va_list args;
     va_start(args);
-    AA_K key = va_arg(args, AA_K);
-    AA_V *value = va_arg(args, AA_V *);
+    key_t key = va_arg(args, key_t);
+    value_t *value = va_arg(args, value_t *);
     va_end(args);
 
     if (!a || !a->buckets)
@@ -545,17 +544,17 @@ extern int aa_rehash(struct aa *a) {
     return 0;
 }
 
-extern bool aa_x_remove(struct aa *a, ...) {
+extern int aa_x_remove(struct aa *a, ...) {
     va_list args;
     va_start(args);
-    AA_K key = va_arg(args, AA_K);
+    key_t key = va_arg(args, key_t);
     va_end(args);
 
     if (!a)
-        return false;
+        return -1;
 
     if (len(a) == 0)
-        return false;
+        return -1;
 
     const size_t hash = calc_hash(key);
     struct aa_bucket *p = find_slot_lookup(a, hash, key);
@@ -565,12 +564,12 @@ extern bool aa_x_remove(struct aa *a, ...) {
         a->deleted++;
         if (len(a) * AA_SHRINK_DEN < dim(a->buckets) * AA_SHRINK_NUM)
             if (shrink(a) != 0)
-                return false;
+                return -1;
 
-        return true;
+        return 0;
     }
 
-    return false;
+    return -1;
 }
 
 extern void aa_clear(struct aa *a) {
@@ -581,7 +580,7 @@ extern void aa_clear(struct aa *a) {
         clear_entry(&a->buckets[i]);
 
     __free(a->buckets);
-    a->buckets = NULL;
+    a->buckets = nullptr;
     a->deleted = a->used = 0;
 
     return;

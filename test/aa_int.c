@@ -31,10 +31,10 @@ int main(void) {
     printf("Heap of a[%zu]: %lu\n", a->used, __memory);
 
     for (int i = 2000; i < 1000000; i++) /* \n */
-        assert(aa_remove(a, i) == true);
+        assert(aa_remove(a, i) == 0);
     aa_rehash(a);
 
-    AA_VALUE value;
+    value_t value;
     printf("Heap of a[%zu]: %lu\n", a->used, __memory);
     assert(aa_get(a, 1000, &value) == 0);
     printf("a[1000]: %d\n", value);

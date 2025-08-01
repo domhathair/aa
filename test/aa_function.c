@@ -33,7 +33,7 @@ int main(void) {
 
     for (size_t i = 0; i < len; i++) aa_set(a, op_name[i], ops[i]);
 
-    AA_VALUE op;
+    value_t op;
     double b = 34.0, c = 56.0;
     for (size_t i = 0; i < len; i++) {
         assert(aa_get(a, op_name[i], &op) == 0);
