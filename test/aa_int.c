@@ -34,7 +34,7 @@ int main(void) {
         assert(aa_remove(a, i) == 0);
     aa_rehash(a);
 
-    value_t value;
+    aa_value_t value;
     printf("Heap of a[%zu]: %lu\n", a->used, __memory);
     assert(aa_get(a, 1000, &value) == 0);
     printf("a[1000]: %d\n", value);

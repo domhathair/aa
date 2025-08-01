@@ -172,8 +172,8 @@ extern int aa_x_remove(struct aa *, ... /* key */);
 #endif /* AA_VALUE */
 
 #if __STDC_VERSION__ >= 202311L
-typedef typeof_unqual(AA_KEY) key_t;
-typedef typeof_unqual(AA_VALUE) value_t;
+typedef typeof_unqual(AA_KEY) aa_key_t;
+typedef typeof_unqual(AA_VALUE) aa_value_t;
 #if (__linux__)
 #include <stdbit.h>
 #endif /* __linux__ */
@@ -182,8 +182,8 @@ typedef typeof_unqual(AA_VALUE) value_t;
 #endif /* __STDC_VERSION__ */
 
 struct aa_node {
-    key_t key;
-    value_t value;
+    aa_key_t key;
+    aa_value_t value;
 };
 
 #ifndef SIZE_WIDTH
@@ -295,14 +295,14 @@ static struct aa_bucket *find_slot_insert(struct aa *a, size_t hash) {
     }
 }
 
-static inline bool equals(key_t k1, key_t k2) {
+static inline bool equals(aa_key_t k1, aa_key_t k2) {
     if (IS_POINTER(k2) == 0)
         return k1 == k2;
     else
         return strcmp((const char *)k1, (const char *)k2) == 0;
 }
 
-static struct aa_bucket *find_slot_lookup(struct aa *a, size_t hash, key_t key) {
+static struct aa_bucket *find_slot_lookup(struct aa *a, size_t hash, aa_key_t key) {
     if (!a || !a->buckets)
         return nullptr;
 
@@ -349,7 +349,7 @@ static size_t mix(size_t h) {
     return h;
 }
 
-static size_t calc_hash(key_t key) {
+static size_t calc_hash(aa_key_t key) {
 #define CRC CRC_TRANSITIVE(SIZE_WIDTH)
 #define CRC_TRANSITIVE(width) CRC_IMPLEMENTATION(width)
 #define CRC_IMPLEMENTATION(width)                                                                                      \
@@ -423,7 +423,7 @@ static int assign_key_ptr(struct aa_node *p, void *key) {
     if (!p || !key)
         return -1;
 
-    p->key = (key_t)__malloc(strlen((const char *)key) + 1);
+    p->key = (aa_key_t)__malloc(strlen((const char *)key) + 1);
     if (!(char *)p->key)
         return -1;
     strcpy((char *)p->key, (const char *)key);
@@ -454,8 +454,8 @@ extern void aa_delete(struct aa *a) {
 extern int aa_x_set(struct aa *a, ...) {
     va_list args;
     va_start(args);
-    key_t key = va_arg(args, key_t);
-    value_t value = va_arg(args, value_t);
+    aa_key_t key = va_arg(args, aa_key_t);
+    aa_value_t value = va_arg(args, aa_value_t);
     va_end(args);
 
     if (!a)
@@ -517,8 +517,8 @@ extern int aa_x_set(struct aa *a, ...) {
 extern int aa_x_get(struct aa *a, ...) {
     va_list args;
     va_start(args);
-    key_t key = va_arg(args, key_t);
-    value_t *value = va_arg(args, value_t *);
+    aa_key_t key = va_arg(args, aa_key_t);
+    aa_value_t *value = va_arg(args, aa_value_t *);
     va_end(args);
 
     if (!a || !a->buckets)
@@ -547,7 +547,7 @@ extern int aa_rehash(struct aa *a) {
 extern int aa_x_remove(struct aa *a, ...) {
     va_list args;
     va_start(args);
-    key_t key = va_arg(args, key_t);
+    aa_key_t key = va_arg(args, aa_key_t);
     va_end(args);
 
     if (!a)

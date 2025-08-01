@@ -57,7 +57,7 @@ int main(void) {
         if (a->buckets[i].entry)
             printf("%s -> %s\n", a->buckets[i].entry->key, a->buckets[i].entry->value);
 
-    value_t value;
+    aa_value_t value;
     if (aa_get(a, "Dan", &value) != 0)
         printf("Dan does not exist!\n");
     else

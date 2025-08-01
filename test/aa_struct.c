@@ -31,7 +31,7 @@ int main(void) {
             printf("%s -> age: %hhu, height: %hhu\n", a->buckets[i].entry->key, a->buckets[i].entry->value.age,
                    a->buckets[i].entry->value.height);
 
-    value_t value;
+    aa_value_t value;
     assert(aa_get(a, "Maria", &value) == 0);
     printf("Maria is %hhu years old\n", value.age);
     assert(aa_get(a, "Alexander", &value) == 0);
