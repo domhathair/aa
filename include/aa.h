@@ -39,7 +39,6 @@
 #include <string.h>
 
 #include "alloc.h"
-#include "crc.h"
 
 /**
  * @brief Enumeration for hash table constants
@@ -187,11 +186,7 @@ struct aa_node {
 };
 
 #ifndef SIZE_WIDTH
-#define SIZE_WIDTH 64
-[[maybe_unused]] static void test_size_width(void) {
-    (void)sizeof(char[(sizeof(size_t) * CHAR_BIT == SIZE_WIDTH) > 0 ? 1 : -1]);
-    return;
-}
+#define SIZE_WIDTH (sizeof(size_t) * CHAR_BIT)
 #endif /* SIZE_WIDTH */
 
 #define IS_POINTER(x)                                                                                                  \
@@ -322,7 +317,7 @@ static size_t bsr(size_t v) {
         return 0;
 
     size_t bit_position = SIZE_WIDTH;
-#if __STDC_VERSION__ >= 202000L && defined(_STDBIT_H)
+#ifdef _STDBIT_H
     return bit_position - stdc_first_leading_one(v);
 #else
     for (; bit_position > 0; bit_position--)
@@ -330,7 +325,7 @@ static size_t bsr(size_t v) {
             return bit_position - 1;
 
     return 0;
-#endif /* __STDC_VERSION__ */
+#endif /* _STDBIT_H */
 }
 
 static size_t nextpow2(size_t n) {
@@ -341,22 +336,35 @@ static size_t nextpow2(size_t n) {
     return 1 << (bsr(n) + !is_power_of2);
 }
 
-static size_t mix(size_t h) {
-    enum { m = 0x5BD1E995 };
-    h ^= h >> 13;
-    h *= m;
-    h ^= h >> 15;
-    return h;
+static size_t fnv1a(const void *data, size_t len) {
+    const unsigned char *bytes = (const unsigned char *)data;
+    enum {
+#if SIZE_WIDTH == 64
+        FNV_OFFSET_BASIS = 14695981039346656037U,
+        FNV_PRIME = 1099511628211U,
+#elif SIZE_WIDTH == 32
+        FNV_OFFSET_BASIS = 2166136261U,
+        FNV_PRIME = 16777619U,
+#else
+#error "Not implemented"
+#endif
+    };
+
+    size_t hash = FNV_OFFSET_BASIS;
+    for (size_t i = 0; i < len; i++) {
+        hash ^= bytes[i];
+        hash *= FNV_PRIME;
+    }
+
+    return hash;
 }
 
 static size_t calc_hash(aa_key_t key) {
-#define CRC CRC_TRANSITIVE(SIZE_WIDTH)
-#define CRC_TRANSITIVE(width) CRC_IMPLEMENTATION(width)
-#define CRC_IMPLEMENTATION(width)                                                                                      \
-    IS_POINTER(key) == 0 ? crc##width(SIZE_MAX, &key, sizeof(key))                                                     \
-                         : crc##width(SIZE_MAX, (const char *)key, strlen((const char *)key))
+    size_t hash = IS_POINTER(key) == 0
+        ? fnv1a(&key, sizeof(key))
+        : fnv1a((const void *)key, strlen((const char *)key));
 
-    return mix(CRC) | AA_HASH_FILLED_MARK;
+    return hash | AA_HASH_FILLED_MARK;
 }
 
 static void clear_entry(struct aa_bucket *b) {
