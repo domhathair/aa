@@ -570,7 +570,9 @@ extern int aa_x_remove(struct aa *a, ...) {
         p->hash = AA_HASH_DELETED;
 
         a->deleted++;
-        if (len(a) * AA_SHRINK_DEN < dim(a->buckets) * AA_SHRINK_NUM)
+        if (len(a) == 0)
+            aa_clear(a);
+        else if (len(a) * AA_SHRINK_DEN < dim(a->buckets) * AA_SHRINK_NUM)
             if (shrink(a) != 0)
                 return -1;
 
