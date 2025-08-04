@@ -1,6 +1,3 @@
-[submodule "lib/crc"]
-	path = lib/crc
-	url = https://github.com/domhathair/crc.git
 [submodule "lib/alloc"]
 	path = lib/alloc
 	url = https://github.com/domhathair/alloc.git
