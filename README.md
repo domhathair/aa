@@ -8,7 +8,7 @@ insertion, deletion, and lookup operations.
 This library is essentially a direct port of [nogcaa](https://github.com/domhathair/nogcaa) to C.
 
 ### Compatibility
-This library utilizes features specific to the C11 and C23 standards, such as `_Generic` and `typeof_unqual`.
+This library utilizes features specific to the C23 standard.
 It is recommended to use the latest versions of compilers that support these features to ensure compatibility.
 
 ### Features
