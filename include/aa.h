@@ -40,6 +40,10 @@
 
 #include "alloc.h"
 
+#ifndef SIZE_WIDTH
+#define SIZE_WIDTH (sizeof(size_t) * CHAR_BIT)
+#endif /* SIZE_WIDTH */
+
 /**
  * @brief Enumeration for hash table constants
  */
@@ -62,8 +66,23 @@ enum {
     /* Magic hash constants to distinguish empty, deleted, and filled buckets */
     AA_HASH_EMPTY = 0,
     AA_HASH_DELETED = 1,
-    AA_HASH_FILLED_MARK = (size_t)1 << (CHAR_BIT * sizeof(size_t) - 1)
+    AA_HASH_FILLED_MARK = (size_t)1 << (SIZE_WIDTH - 1)
 };
+
+#ifndef IS_POINTER
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef POINTER_TYPE_CLASS
+#define POINTER_TYPE_CLASS 5
+#endif /* POINTER_TYPE_CLASS */
+
+#define IS_SAME_TYPE(a, b) __builtin_types_compatible_p(typeof(a), typeof(b))
+#define IS_PTR_OR_ARRAY(p) (__builtin_classify_type(p) == POINTER_TYPE_CLASS)
+#define DECAY(a) (&*__builtin_choose_expr(IS_PTR_OR_ARRAY(a), a, NULL))
+#define IS_POINTER(p) IS_SAME_TYPE(p, DECAY(p))
+#else
+#define IS_POINTER(P) _Generic(&(typeof_unqual(P)){}, typeof_unqual(*P) * *: 1, default: 0)
+#endif /* __GNUC__ || __clang__ */
+#endif /* IS_POINTER */
 
 /**
  * @brief Forward declaration of the aa_node structure
@@ -118,7 +137,7 @@ extern void aa_delete(struct aa *);
  * @param value A pointer to the variable where the value will be stored
  * @return 0 on success, -1 on failure
  */
-#define aa_get(aa, key, value) aa_x_get(aa, key, value)
+#define aa_get(aa, key, value) aa_x_get(aa, key, IS_POINTER(value) ? value : (typeof_unqual(value))NULL)
 
 /**
  * @brief Removes a key-value pair from the hash table
@@ -182,25 +201,6 @@ struct aa_node {
     aa_key_t key;
     aa_value_t value;
 };
-
-#ifndef SIZE_WIDTH
-#define SIZE_WIDTH (sizeof(size_t) * CHAR_BIT)
-#endif /* SIZE_WIDTH */
-
-#ifndef IS_POINTER
-#if defined(__GNUC__) || defined(__clang__)
-#ifndef POINTER_TYPE_CLASS
-#define POINTER_TYPE_CLASS 5
-#endif /* POINTER_TYPE_CLASS */
-
-#define IS_SAME_TYPE(a, b) __builtin_types_compatible_p(typeof(a), typeof(b))
-#define IS_PTR_OR_ARRAY(p) (__builtin_classify_type(p) == POINTER_TYPE_CLASS)
-#define DECAY(a) (&*__builtin_choose_expr(IS_PTR_OR_ARRAY(a), a, NULL))
-#define IS_POINTER(p) IS_SAME_TYPE(p, DECAY(p))
-#else
-#define IS_POINTER(P) _Generic(&(typeof_unqual(P)){}, typeof_unqual(*P) * *: 1, default: 0)
-#endif /* __GNUC__ || __clang__ */
-#endif /* IS_POINTER */
 
 static int aa_alloc_htable(struct aa *a, size_t sz) {
     if (!a || sz == 0)
