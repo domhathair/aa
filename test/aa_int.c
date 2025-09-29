@@ -26,11 +26,11 @@ int main(void) {
     struct aa *a = aa_new();
     assert(a);
 
-    for (int i = 0; i < 1000000; i++) /* \n */
+    for (int i = 0; i < 1000000; i++)
         assert(aa_set(a, i, i + 1) == 0);
     printf("Heap of a[%zu]: %lu\n", a->used, __memory);
 
-    for (int i = 2000; i < 1000000; i++) /* \n */
+    for (int i = 2000; i < 1000000; i++)
         assert(aa_remove(a, i) == 0);
     aa_rehash(a);
 

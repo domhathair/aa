@@ -6,12 +6,12 @@
 
 #ifdef TEST_AA_STRUCT
 
+enum gender : bool { MALE, FEMALE };
+
 struct person {
     unsigned char age, height;
-    bool gender;
+    enum gender gender;
 };
-
-enum { MALE = false, FEMALE = true };
 
 #define AA_KEY char *
 #define AA_VALUE struct person
@@ -26,7 +26,7 @@ int main(void) {
     aa_set(a, "Valentina", ((const struct person){.age = 27, .height = 153, .gender = FEMALE}));
     aa_set(a, "Maria", ((const struct person){.age = 26, .height = 172, .gender = FEMALE}));
 
-    for (size_t i = 0; i < aa_len(a); i++)
+    for (size_t i = 0; i < aa_entries(a); i++)
         if (a->buckets[i].entry)
             printf("%s -> age: %hhu, height: %hhu\n", a->buckets[i].entry->key, a->buckets[i].entry->value.age,
                    a->buckets[i].entry->value.height);

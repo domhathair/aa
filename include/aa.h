@@ -89,7 +89,7 @@ struct aa {
 /**
  * @brief Creates a new hash table
  *
- * @return A pointer to the newly created hash table, or nullptr if the allocation fails
+ * @return A pointer to the newly created hash table, or NULL if the allocation fails
  */
 extern struct aa *aa_new(void);
 
@@ -150,7 +150,7 @@ extern void aa_clear(struct aa *);
  * @param a A pointer to the hash table
  * @return The number of key-value pairs in the hash table
  */
-extern size_t aa_len(struct aa *);
+extern size_t aa_entries(struct aa *);
 
 extern int aa_x_set(struct aa *, ... /* key, value */);
 extern int aa_x_get(struct aa *, ... /* key, &value */);
@@ -159,8 +159,6 @@ extern int aa_x_remove(struct aa *, ... /* key */);
 #endif /* AA_H */
 
 #ifdef AA_IMPLEMENTATION
-#ifndef AA_IMPLEMENTED
-#define AA_IMPLEMENTED
 
 #ifndef AA_KEY
 #error "Please define AA_KEY type"
@@ -189,28 +187,22 @@ struct aa_node {
 #define SIZE_WIDTH (sizeof(size_t) * CHAR_BIT)
 #endif /* SIZE_WIDTH */
 
-#define IS_POINTER(x)                                                                                                  \
-    _Generic((x),                                                                                                      \
-        bool: 0,                                                                                                       \
-        unsigned char: 0,                                                                                              \
-        signed char: 0,                                                                                                \
-        unsigned short: 0,                                                                                             \
-        signed short: 0,                                                                                               \
-        unsigned int: 0,                                                                                               \
-        signed int: 0,                                                                                                 \
-        unsigned long: 0,                                                                                              \
-        signed long: 0,                                                                                                \
-        unsigned long long: 0,                                                                                         \
-        signed long long: 0,                                                                                           \
-        float: 0,                                                                                                      \
-        double: 0,                                                                                                     \
-        long double: 0,                                                                                                \
-        unsigned char *: 1,                                                                                            \
-        signed char *: 1,                                                                                              \
-        char *: 1,                                                                                                     \
-        default: assert(0))
+#ifndef IS_POINTER
+#if defined(__GNUC__) || defined(__clang__)
+#ifndef POINTER_TYPE_CLASS
+#define POINTER_TYPE_CLASS 5
+#endif /* POINTER_TYPE_CLASS */
 
-static int alloc_htable(struct aa *a, size_t sz) {
+#define IS_SAME_TYPE(a, b) __builtin_types_compatible_p(typeof(a), typeof(b))
+#define IS_PTR_OR_ARRAY(p) (__builtin_classify_type(p) == POINTER_TYPE_CLASS)
+#define DECAY(a) (&*__builtin_choose_expr(IS_PTR_OR_ARRAY(a), a, NULL))
+#define IS_POINTER(p) IS_SAME_TYPE(p, DECAY(p))
+#else
+#define IS_POINTER(P) _Generic(&(typeof_unqual(P)){}, typeof_unqual(*P) * *: 1, default: 0)
+#endif /* __GNUC__ || __clang__ */
+#endif /* IS_POINTER */
+
+static int aa_alloc_htable(struct aa *a, size_t sz) {
     if (!a || sz == 0)
         return -1;
 
@@ -222,46 +214,46 @@ static int alloc_htable(struct aa *a, size_t sz) {
     return 0;
 }
 
-static int init_table_if_needed(struct aa *a) {
+static int aa_init_table_if_needed(struct aa *a) {
     if (!a)
         return -1;
 
     if (!a->buckets)
-        if (alloc_htable(a, AA_INIT_NUM_BUCKETS) != 0)
+        if (aa_alloc_htable(a, AA_INIT_NUM_BUCKETS) != 0)
             return -1;
 
     return 0;
 }
 
-static bool empty(struct aa_bucket *b) {
+static bool aa_empty(struct aa_bucket *b) {
     if (!b)
         return false;
 
     return b->hash == AA_HASH_EMPTY;
 }
 
-static bool deleted(struct aa_bucket *b) {
+static bool aa_deleted(struct aa_bucket *b) {
     if (!b)
         return true;
 
     return b->hash == AA_HASH_DELETED;
 }
 
-static bool filled(struct aa_bucket *b) {
+static bool aa_filled(struct aa_bucket *b) {
     if (!b)
         return false;
 
     return (ptrdiff_t)b->hash < 0;
 }
 
-static size_t dim(struct aa_bucket *b) {
+static size_t aa_dim(struct aa_bucket *b) {
     if (!b)
         return 0;
 
     return __len(b) / sizeof(struct aa_bucket);
 }
 
-static size_t len(struct aa *a) {
+static size_t aa_len(struct aa *a) {
     if (!a)
         return 0;
 
@@ -271,48 +263,48 @@ static size_t len(struct aa *a) {
     return a->used - a->deleted;
 }
 
-static size_t mask(struct aa *a) {
+static size_t aa_mask(struct aa *a) {
     if (!a)
         return 0;
 
-    return dim(a->buckets) - 1;
+    return aa_dim(a->buckets) - 1;
 }
 
-static struct aa_bucket *find_slot_insert(struct aa *a, size_t hash) {
+static struct aa_bucket *aa_find_slot_insert(struct aa *a, size_t hash) {
     if (!a || !a->buckets)
-        return nullptr;
+        return NULL;
 
-    for (size_t m = mask(a), i = hash & m, j = 1;; j++) {
-        if (!filled(&a->buckets[i]))
+    for (size_t m = aa_mask(a), i = hash & m, j = 1;; j++) {
+        if (!aa_filled(&a->buckets[i]))
             return &a->buckets[i];
 
         i = (i + j) & m;
     }
 }
 
-static inline bool equals(aa_key_t k1, aa_key_t k2) {
-    if (IS_POINTER(k2) == 0)
-        return k1 == k2;
-    else
+static inline bool aa_equals(aa_key_t k1, aa_key_t k2) {
+    if (IS_POINTER(k2))
         return strcmp((const char *)k1, (const char *)k2) == 0;
+    else
+        return k1 == k2;
 }
 
-static struct aa_bucket *find_slot_lookup(struct aa *a, size_t hash, aa_key_t key) {
+static struct aa_bucket *aa_find_slot_lookup(struct aa *a, size_t hash, aa_key_t key) {
     if (!a || !a->buckets)
-        return nullptr;
+        return NULL;
 
-    for (size_t m = mask(a), i = hash & m, j = 1;; j++) {
-        if (empty(&a->buckets[i]))
-            return nullptr;
+    for (size_t m = aa_mask(a), i = hash & m, j = 1;; j++) {
+        if (aa_empty(&a->buckets[i]))
+            return NULL;
 
-        if (a->buckets[i].hash == hash && equals(key, a->buckets[i].entry->key))
+        if (a->buckets[i].hash == hash && aa_equals(key, a->buckets[i].entry->key))
             return &a->buckets[i];
 
         i = (i + j) & m;
     }
 }
 
-static size_t bsr(size_t v) {
+static size_t aa_bsr(size_t v) {
     if (v == 0)
         return 0;
 
@@ -328,18 +320,21 @@ static size_t bsr(size_t v) {
 #endif /* _STDBIT_H */
 }
 
-static size_t nextpow2(size_t n) {
+static size_t aa_nextpow2(size_t n) {
     if (n == 0)
         return 1;
 
     const bool is_power_of2 = !((n - 1) & n);
-    return 1 << (bsr(n) + !is_power_of2);
+    return 1 << (aa_bsr(n) + !is_power_of2);
 }
 
-static size_t fnv1a(const void *data, size_t len) {
+static size_t aa_fnv1a(const void *data, size_t len) {
     const unsigned char *bytes = (const unsigned char *)data;
     enum {
-#if SIZE_WIDTH == 64
+#if SIZE_WIDTH == 128
+        FNV_OFFSET_BASIS = 144066263297769815596495629667062367629U,
+        FNV_PRIME = 309485009821345068724781371U,
+#elif SIZE_WIDTH == 64
         FNV_OFFSET_BASIS = 14695981039346656037U,
         FNV_PRIME = 1099511628211U,
 #elif SIZE_WIDTH == 32
@@ -359,43 +354,45 @@ static size_t fnv1a(const void *data, size_t len) {
     return hash;
 }
 
-static size_t calc_hash(aa_key_t key) {
-    size_t hash = IS_POINTER(key) == 0
-        ? fnv1a(&key, sizeof(key))
-        : fnv1a((const void *)key, strlen((const char *)key));
+static size_t aa_calc_hash(aa_key_t key) {
+    /* clang-format off */
+    size_t hash = !IS_POINTER(key)
+        ? aa_fnv1a(&key, sizeof(key))
+        : aa_fnv1a((const void *)key, strlen((const char *)key));
+    /* clang-format on */
 
     return hash | AA_HASH_FILLED_MARK;
 }
 
-static void clear_entry(struct aa_bucket *b) {
+static void aa_clear_entry(struct aa_bucket *b) {
     if (!b || !b->entry)
         return;
 
-    if ((void *)b->entry->key && IS_POINTER(b->entry->key) != 0)
+    if ((void *)b->entry->key && IS_POINTER(b->entry->key))
         __free((void *)b->entry->key);
     __free(b->entry);
 
-    b->entry = nullptr;
+    b->entry = NULL;
 
     return;
 }
 
-static int resize(struct aa *a, size_t sz) {
+static int aa_resize(struct aa *a, size_t sz) {
     if (!a || sz == 0)
         return -1;
 
     struct aa_bucket *obuckets = a->buckets;
-    if (alloc_htable(a, sz) != 0)
+    if (aa_alloc_htable(a, sz) != 0)
         return -1;
 
-    for (size_t i = 0; i < dim(obuckets); i++) {
+    for (size_t i = 0; i < aa_dim(obuckets); i++) {
         struct aa_bucket *ob = &obuckets[i];
-        if (filled(ob)) {
-            struct aa_bucket *nb = find_slot_insert(a, ob->hash);
+        if (aa_filled(ob)) {
+            struct aa_bucket *nb = aa_find_slot_insert(a, ob->hash);
             if (nb)
                 *nb = *ob;
-        } else if (empty(ob) || deleted(ob))
-            clear_entry(ob);
+        } else if (aa_empty(ob) || aa_deleted(ob))
+            aa_clear_entry(ob);
     }
 
     a->used -= a->deleted;
@@ -406,28 +403,30 @@ static int resize(struct aa *a, size_t sz) {
     return 0;
 }
 
-static int grow(struct aa *a) {
+static int aa_grow(struct aa *a) {
     if (!a || !a->buckets)
         return -1;
 
-    size_t sz = /* \n */
-        len(a) * AA_SHRINK_DEN < AA_GROW_FAC * dim(a->buckets) * AA_SHRINK_NUM ? dim(a->buckets)
-                                                                               : AA_GROW_FAC * dim(a->buckets);
+    /* clang-format off */
+    size_t sz = aa_len(a) * AA_SHRINK_DEN < AA_GROW_FAC * aa_dim(a->buckets) * AA_SHRINK_NUM
+            ? aa_dim(a->buckets)
+            : (AA_GROW_FAC * aa_dim(a->buckets));
+    /* clang-format on */
 
-    return resize(a, sz);
+    return aa_resize(a, sz);
 }
 
-static int shrink(struct aa *a) {
+static int aa_shrink(struct aa *a) {
     if (!a || !a->buckets)
         return -1;
 
-    if (dim(a->buckets) > AA_INIT_NUM_BUCKETS)
-        return resize(a, dim(a->buckets) / AA_GROW_FAC);
+    if (aa_dim(a->buckets) > AA_INIT_NUM_BUCKETS)
+        return aa_resize(a, aa_dim(a->buckets) / AA_GROW_FAC);
 
     return 0;
 }
 
-static int assign_key_ptr(struct aa_node *p, void *key) {
+static int aa_assign_key_ptr(struct aa_node *p, void *key) {
     if (!p || !key)
         return -1;
 
@@ -442,9 +441,9 @@ static int assign_key_ptr(struct aa_node *p, void *key) {
 extern struct aa *aa_new(void) {
     struct aa *a = (struct aa *)__malloc(sizeof(struct aa));
     if (!a)
-        return nullptr;
+        return NULL;
 
-    a->buckets = nullptr;
+    a->buckets = NULL;
     a->deleted = a->used = 0;
 
     return a;
@@ -469,37 +468,37 @@ extern int aa_x_set(struct aa *a, ...) {
     if (!a)
         return -1;
 
-    if (init_table_if_needed(a) != 0)
+    if (aa_init_table_if_needed(a) != 0)
         return -1;
 
-    const size_t hash = calc_hash(key);
+    const size_t hash = aa_calc_hash(key);
 
-    struct aa_bucket *p = find_slot_lookup(a, hash, key);
+    struct aa_bucket *p = aa_find_slot_lookup(a, hash, key);
     if (p && p->entry) {
         p->entry->value = value;
         return 0;
     }
 
-    p = find_slot_insert(a, hash);
+    p = aa_find_slot_insert(a, hash);
     if (!p)
         return -1;
 
-    if (deleted(p) && a->deleted > 0)
+    if (aa_deleted(p) && a->deleted > 0)
         a->deleted--;
-    else if (++a->used * AA_GROW_DEN > dim(a->buckets) * AA_GROW_NUM) {
-        if (grow(a) != 0)
+    else if (++a->used * AA_GROW_DEN > aa_dim(a->buckets) * AA_GROW_NUM) {
+        if (aa_grow(a) != 0)
             return -1;
-        p = find_slot_insert(a, hash);
+        p = aa_find_slot_insert(a, hash);
     }
 
     p->hash = hash;
 
-    if (deleted(p)) {
-        if (IS_POINTER(p->entry->key) == 0)
+    if (aa_deleted(p)) {
+        if (!IS_POINTER(p->entry->key))
             p->entry->key = key;
         else {
             __free((void *)p->entry->key);
-            if (assign_key_ptr(p->entry, (void *)key) != 0)
+            if (aa_assign_key_ptr(p->entry, (void *)key) != 0)
                 return -1;
         }
         p->entry->value = value;
@@ -508,9 +507,9 @@ extern int aa_x_set(struct aa *a, ...) {
         if (!nnode)
             return -1;
 
-        if (IS_POINTER(nnode->key) == 0)
+        if (!IS_POINTER(nnode->key))
             nnode->key = key;
-        else if (assign_key_ptr(nnode, (void *)key) != 0) {
+        else if (aa_assign_key_ptr(nnode, (void *)key) != 0) {
             __free(nnode);
             return -1;
         }
@@ -532,8 +531,8 @@ extern int aa_x_get(struct aa *a, ...) {
     if (!a || !a->buckets)
         return -1;
 
-    struct aa_bucket *b = find_slot_lookup(a, calc_hash(key), key);
-    if (b && filled(b)) {
+    struct aa_bucket *b = aa_find_slot_lookup(a, aa_calc_hash(key), key);
+    if (b && aa_filled(b)) {
         if (value)
             *value = b->entry->value;
         return 0;
@@ -546,8 +545,8 @@ extern int aa_rehash(struct aa *a) {
     if (!a)
         return -1;
 
-    if (len(a) != 0)
-        return resize(a, nextpow2(AA_INIT_DEN * len(a) / AA_INIT_NUM));
+    if (aa_len(a) != 0)
+        return aa_resize(a, aa_nextpow2(AA_INIT_DEN * aa_len(a) / AA_INIT_NUM));
 
     return 0;
 }
@@ -561,19 +560,19 @@ extern int aa_x_remove(struct aa *a, ...) {
     if (!a)
         return -1;
 
-    if (len(a) == 0)
+    if (aa_len(a) == 0)
         return -1;
 
-    const size_t hash = calc_hash(key);
-    struct aa_bucket *p = find_slot_lookup(a, hash, key);
+    const size_t hash = aa_calc_hash(key);
+    struct aa_bucket *p = aa_find_slot_lookup(a, hash, key);
     if (p) {
         p->hash = AA_HASH_DELETED;
 
         a->deleted++;
-        if (len(a) == 0)
+        if (aa_len(a) == 0)
             aa_clear(a);
-        else if (len(a) * AA_SHRINK_DEN < dim(a->buckets) * AA_SHRINK_NUM)
-            if (shrink(a) != 0)
+        else if (aa_len(a) * AA_SHRINK_DEN < aa_dim(a->buckets) * AA_SHRINK_NUM)
+            if (aa_shrink(a) != 0)
                 return -1;
 
         return 0;
@@ -586,22 +585,21 @@ extern void aa_clear(struct aa *a) {
     if (!a || !a->buckets)
         return;
 
-    for (size_t i = 0; i < dim(a->buckets); i++) /* \n */
-        clear_entry(&a->buckets[i]);
+    for (size_t i = 0; i < aa_dim(a->buckets); i++) /* \n */
+        aa_clear_entry(&a->buckets[i]);
 
     __free(a->buckets);
-    a->buckets = nullptr;
+    a->buckets = NULL;
     a->deleted = a->used = 0;
 
     return;
 }
 
-extern size_t aa_len(struct aa *a) {
+extern size_t aa_entries(struct aa *a) {
     if (!a || !a->buckets)
         return 0;
 
-    return dim(a->buckets);
+    return aa_dim(a->buckets);
 }
 
-#endif /* AA_IMPLEMENTED */
 #endif /* AA_IMPLEMENTATION */

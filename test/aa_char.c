@@ -22,7 +22,7 @@ int main(void) {
     aa_set(a, "Кириллица", "Тоже работает");
     aa_set(a, "Ferhat", "Kurtulmuş");
 
-    for (size_t i = 0; i < aa_len(a); i++)
+    for (size_t i = 0; i < aa_entries(a); i++)
         if (a->buckets[i].entry)
             printf("%s -> %s\n", a->buckets[i].entry->key, a->buckets[i].entry->value);
 
