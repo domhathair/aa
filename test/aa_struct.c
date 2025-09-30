@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <string.h>
 
 #ifdef TEST_AA_STRUCT
 
@@ -26,10 +25,8 @@ int main(void) {
     aa_set(a, "Valentina", ((const struct person){.age = 27, .height = 153, .gender = FEMALE}));
     aa_set(a, "Maria", ((const struct person){.age = 26, .height = 172, .gender = FEMALE}));
 
-    for (size_t i = 0; i < aa_entries(a); i++)
-        if (a->buckets[i].entry)
-            printf("%s -> age: %hhu, height: %hhu\n", a->buckets[i].entry->key, a->buckets[i].entry->value.age,
-                   a->buckets[i].entry->value.height);
+    for (struct aa_node *node = NULL; (node = aa_next(a));)
+        printf("%s -> age: %hhu, height: %hhu\n", node->key, node->value.age, node->value.height);
 
     aa_value_t value;
     assert(aa_get(a, "Maria", &value) == 0);

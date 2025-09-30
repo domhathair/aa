@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <string.h>
 
 #ifdef TEST_AA_CHAR
 
@@ -22,9 +21,8 @@ int main(void) {
     aa_set(a, "Кириллица", "Тоже работает");
     aa_set(a, "Ferhat", "Kurtulmuş");
 
-    for (size_t i = 0; i < aa_entries(a); i++)
-        if (a->buckets[i].entry)
-            printf("%s -> %s\n", a->buckets[i].entry->key, a->buckets[i].entry->value);
+    for (struct aa_node *node = NULL; (node = aa_next(a));)
+        printf("%s -> %s\n", node->key, node->value);
 
     aa_value_t value;
     if (aa_get(a, "Dan", &value) != 0)
@@ -46,6 +44,10 @@ int main(void) {
     printf("%s\n", aa_get(a, "Кириллица", &value) == 0 ? value : "(null)");
     printf("%s\n", aa_get(a, "Ferhat", &value) == 0 ? value : "(null)");
     printf("%s\n", aa_get(a, "Что-то, чего точно нет", &value) == 0 ? value : "(null)");
+
+    printf("After rehash:\n");
+    for (struct aa_node *node = NULL; (node = aa_next(a));)
+        printf("%s -> %s\n", node->key, node->value);
 
     aa_delete(a);
 

@@ -1,13 +1,11 @@
 #include "alloc.h"
 #include <assert.h>
 #include <stddef.h>
-#include <stdio.h>
-#include <string.h>
 
 #ifdef TEST_AA_IS_POINTER
 
-#define AA_KEY int
-#define AA_VALUE int
+#define AA_KEY int*
+#define AA_VALUE int*
 #define AA_IMPLEMENTATION
 #include "aa.h"
 

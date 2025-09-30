@@ -109,13 +109,12 @@ int main(int argc, char **argv) {
 
         /* Edit */
         Ihandle *locale_menu = IupMenu(NULL);
-        for (size_t i = 0; i < aa_entries(a); i++)
-            if (a->buckets[i].entry) {
-                /* Add locales from table above */
-                Ihandle *item_locale = IupItem(a->buckets[i].entry->key, NULL);
-                IupSetCallback(item_locale, "ACTION", (Icallback)locale_cb);
-                IupAppend(locale_menu, item_locale);
-            }
+        for (struct aa_node *node = NULL; (node = aa_next(a));) {
+            /* Add locales from table above */
+            Ihandle *item_locale = IupItem(node->key, NULL);
+            IupSetCallback(item_locale, "ACTION", (Icallback)locale_cb);
+            IupAppend(locale_menu, item_locale);
+        }
 
         /* Menu */
         Ihandle *file_menu = IupMenu(item_open, item_saveas, IupSeparator(), item_exit, NULL);
@@ -142,9 +141,8 @@ int main(int argc, char **argv) {
         IupClose();
     } while (redraw);
 
-    for (size_t i = 0; i < aa_entries(a); i++)
-        if (a->buckets[i].entry)
-            aa_delete(a->buckets[i].entry->value);
+    for (struct aa_node *node = NULL; (node = aa_next(a));)
+        aa_delete(node->value);
     aa_delete(a);
 
     assert(__memory == 0);

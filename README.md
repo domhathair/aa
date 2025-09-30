@@ -32,7 +32,9 @@ It is recommended to use the latest versions of compilers that support these fea
 - `int aa_x_remove(struct aa *a, ... /* key */)`: Removes a key-value pair from the hash table.
 - `int aa_rehash(struct aa *a)`: Rehashes the hash table to improve performance.
 - `void aa_clear(struct aa *a)`: Clears all key-value pairs from the hash table.
+- `size_t aa_len(struct aa *)`: Returns the number of active (non-deleted) entries in the hash table.
 - `size_t aa_entries(struct aa *a)`: Returns the number of buckets in the hash table.
+- `struct aa_node *aa_next(struct aa *)`: Iterates over the entries in the hash table.
 
 ### Custom Key and Value Types
 To use custom key and value types, define `AA_KEY` and `AA_VALUE` before including `aa.h`. For example:
@@ -53,9 +55,8 @@ int main(void) {
     aa_set(a, "Кириллица", "Тоже работает");
     aa_set(a, "Ferhat", "Kurtulmuş");
 
-    for (size_t i = 0; i < aa_entries(a); i++)
-        if (a->buckets[i].entry)
-            printf("%s -> %s\n", a->buckets[i].entry->key, a->buckets[i].entry->value);
+    for (struct aa_node *node = NULL; node = aa_next(a);)
+        printf("%s -> %s\n", node->key, node->value);
 
     aa_value_t value;
     if (aa_get(a, "Dan", &value) != 0)
