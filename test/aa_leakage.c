@@ -58,8 +58,8 @@ int main(void) {
 
     aa_delete(a);
 
-    log("Memory: %zu\n", __memory);
-    assert(__memory == 0);
+    log("Memory: %zu\n", _Allocated_memory);
+    assert(_Allocated_memory == 0);
 
     return 0;
 }

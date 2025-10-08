@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
         aa_delete(node->value);
     aa_delete(a);
 
-    assert(__memory == 0);
+    assert(_Allocated_memory == 0);
 
     return EXIT_SUCCESS;
 }

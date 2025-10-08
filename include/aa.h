@@ -224,7 +224,7 @@ static int aa_alloc_htable(struct aa *a, size_t s) {
     if (!a || s == 0)
         return -1;
 
-    struct aa_bucket *_Htable = (struct aa_bucket *)__malloc(sizeof(struct aa_bucket) * s);
+    struct aa_bucket *_Htable = (struct aa_bucket *)fat_malloc(sizeof(struct aa_bucket) * s);
     if (!_Htable)
         return -1;
     a->buckets = _Htable;
@@ -268,7 +268,7 @@ static size_t aa_dim(struct aa_bucket *b) {
     if (!b)
         return 0;
 
-    return __len(b) / sizeof(struct aa_bucket);
+    return fat_len(b) / sizeof(struct aa_bucket);
 }
 
 extern size_t aa_len(struct aa *a) {
@@ -387,8 +387,8 @@ static void aa_clear_entry(struct aa_bucket *b) {
         return;
 
     if ((void *)b->entry->key && IS_POINTER(b->entry->key))
-        __free((void *)b->entry->key);
-    __free(b->entry);
+        fat_free((void *)b->entry->key);
+    fat_free(b->entry);
 
     b->entry = NULL;
 
@@ -417,7 +417,7 @@ static int aa_resize(struct aa *a, size_t s) {
     a->deleted = 0;
 
     if (o)
-        __free(o);
+        fat_free(o);
 
     return 0;
 }
@@ -449,7 +449,7 @@ static int aa_assign_key_ptr(struct aa_node *p, void *key) {
     if (!p || !key)
         return -1;
 
-    p->key = (aa_key_t)__malloc(strlen((const char *)key) + 1);
+    p->key = (aa_key_t)fat_malloc(strlen((const char *)key) + 1);
     if (!(char *)p->key)
         return -1;
     strcpy((char *)p->key, (const char *)key);
@@ -458,7 +458,7 @@ static int aa_assign_key_ptr(struct aa_node *p, void *key) {
 }
 
 extern struct aa *aa_new(void) {
-    struct aa *a = (struct aa *)__malloc(sizeof(struct aa));
+    struct aa *a = (struct aa *)fat_malloc(sizeof(struct aa));
     if (!a)
         return NULL;
 
@@ -472,7 +472,7 @@ extern void aa_delete(struct aa *a) {
     if (!a)
         return;
 
-    aa_clear(a), __free(a);
+    aa_clear(a), fat_free(a);
 
     return;
 }
@@ -514,20 +514,20 @@ extern int aa_x_set(struct aa *a, ...) {
         if (!IS_POINTER(b->entry->key))
             b->entry->key = key;
         else {
-            __free((void *)b->entry->key);
+            fat_free((void *)b->entry->key);
             if (aa_assign_key_ptr(b->entry, (void *)key) != 0)
                 return -1;
         }
         b->entry->value = value;
     } else {
-        struct aa_node *n = (struct aa_node *)__malloc(sizeof(struct aa_node));
+        struct aa_node *n = (struct aa_node *)fat_malloc(sizeof(struct aa_node));
         if (!n)
             return -1;
 
         if (!IS_POINTER(n->key))
             n->key = key;
         else if (aa_assign_key_ptr(n, (void *)key) != 0) {
-            __free(n);
+            fat_free(n);
             return -1;
         }
         n->value = value;
@@ -607,7 +607,7 @@ extern void aa_clear(struct aa *a) {
     for (size_t i = 0; i < aa_dim(a->buckets); i++)
         aa_clear_entry(&a->buckets[i]);
 
-    __free(a->buckets);
+    fat_free(a->buckets);
     a->buckets = NULL;
     a->deleted = a->used = 0;
 
