@@ -1,9 +1,9 @@
 #include "alloc.h"
 #include <assert.h>
-#include <iup/iup.h>
 #include <stdlib.h>
 
 #ifdef TEST_AA_IUP
+#include <iup/iup.h>
 
 #define AA_KEY char *
 #define AA_VALUE void *

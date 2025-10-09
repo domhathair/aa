@@ -41,7 +41,7 @@
 #include "alloc.h"
 
 #ifndef SIZE_WIDTH
-#define SIZE_WIDTH (sizeof(size_t) * CHAR_BIT)
+#define SIZE_WIDTH __WORDSIZE
 #endif /* SIZE_WIDTH */
 
 /**
