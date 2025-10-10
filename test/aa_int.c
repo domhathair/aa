@@ -20,21 +20,21 @@ int main(void) {
     assert(_Allocated_memory == fat_len(memory));
 
     fat_free(memory);
-    printf("Heap after deallocation: %lu\n", _Allocated_memory);
+    printf("Heap after deallocation: %zu\n", _Allocated_memory);
 
     struct aa *a = aa_new();
     assert(a);
 
     for (int i = 0; i < 1000000; i++)
         assert(aa_set(a, i, i + 1) == 0);
-    printf("Heap of a[%zu]: %lu\n", a->used, _Allocated_memory);
+    printf("Heap of a[%zu]: %zu\n", a->used, _Allocated_memory);
 
     for (int i = 2000; i < 1000000; i++)
         assert(aa_remove(a, i) == 0);
     aa_rehash(a);
 
     aa_value_t value;
-    printf("Heap of a[%zu]: %lu\n", a->used, _Allocated_memory);
+    printf("Heap of a[%zu]: %zu\n", a->used, _Allocated_memory);
     assert(aa_get(a, 1000, &value) == 0);
     printf("a[1000]: %d\n", value);
 

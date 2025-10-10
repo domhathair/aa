@@ -41,6 +41,13 @@
 #include "alloc.h"
 
 #ifndef SIZE_WIDTH
+#if defined(_WIN32) && !defined(__WORDSIZE)
+#ifndef _WIN64
+#define __WORDSIZE 64
+#else
+#define __WORDSIZE 32
+#endif
+#endif /* !__WORDSIZE */
 #define SIZE_WIDTH __WORDSIZE
 #endif /* SIZE_WIDTH */
 
@@ -129,7 +136,11 @@ extern void aa_delete(struct aa *);
  * @param value The value to be associated with the key
  * @return 0 on success, -1 on failure.
  */
+#ifdef _WIN32
+#define aa_set(aa, key, value) aa_x_set(aa, 2, key, value)
+#else
 #define aa_set(aa, key, value) aa_x_set(aa, key, value)
+#endif /* _WIN32 */
 
 /**
  * @brief Gets the value associated with a key in the hash table
@@ -139,7 +150,11 @@ extern void aa_delete(struct aa *);
  * @param value A pointer to the variable where the value will be stored
  * @return 0 on success, -1 on failure
  */
+#ifdef _WIN32
+#define aa_get(aa, key, value) aa_x_get(aa, 2, key, IS_POINTER(value) ? value : (typeof_unqual(value))NULL)
+#else
 #define aa_get(aa, key, value) aa_x_get(aa, key, IS_POINTER(value) ? value : (typeof_unqual(value))NULL)
+#endif /* _WIN32 */
 
 /**
  * @brief Removes a key-value pair from the hash table
@@ -148,7 +163,11 @@ extern void aa_delete(struct aa *);
  * @param key The key to be removed
  * @return 0 on success, -1 on failure
  */
+#ifdef _WIN32
+#define aa_remove(aa, key) aa_x_remove(aa, 1, key)
+#else
 #define aa_remove(aa, key) aa_x_remove(aa, key)
+#endif /* _WIN32 */
 
 /**
  * @brief Rehashes the hash table to a new size
@@ -189,9 +208,21 @@ extern size_t aa_entries(struct aa *);
  */
 extern struct aa_node *aa_next(struct aa *);
 
-extern int aa_x_set(struct aa *, ... /* key, value */);
-extern int aa_x_get(struct aa *, ... /* key, &value */);
-extern int aa_x_remove(struct aa *, ... /* key */);
+extern int aa_x_set(struct aa *,
+#ifdef _WIN32
+                    size_t,
+#endif /* _WIN32 */
+                    ...);
+extern int aa_x_get(struct aa *,
+#ifdef _WIN32
+                    size_t,
+#endif /* _WIN32 */
+                    ...);
+extern int aa_x_remove(struct aa *,
+#ifdef _WIN32
+                       size_t,
+#endif /* _WIN32 */
+                       ...);
 
 #endif /* AA_H */
 
@@ -477,9 +508,17 @@ extern void aa_delete(struct aa *a) {
     return;
 }
 
-extern int aa_x_set(struct aa *a, ...) {
+extern int aa_x_set(struct aa *a,
+#ifdef _WIN32
+                    size_t n_memb,
+#endif
+                    ...) {
     va_list args;
+#ifdef _WIN32
+    va_start(args, n_memb);
+#else
     va_start(args);
+#endif
     aa_key_t key = va_arg(args, aa_key_t);
     aa_value_t value = va_arg(args, aa_value_t);
     va_end(args);
@@ -540,9 +579,17 @@ extern int aa_x_set(struct aa *a, ...) {
     return 0;
 }
 
-extern int aa_x_get(struct aa *a, ...) {
+extern int aa_x_get(struct aa *a,
+#ifdef _WIN32
+                    size_t n_memb,
+#endif
+                    ...) {
     va_list args;
+#ifdef _WIN32
+    va_start(args, n_memb);
+#else
     va_start(args);
+#endif
     aa_key_t key = va_arg(args, aa_key_t);
     aa_value_t *value = va_arg(args, aa_value_t *);
     va_end(args);
@@ -570,9 +617,17 @@ extern int aa_rehash(struct aa *a) {
     return 0;
 }
 
-extern int aa_x_remove(struct aa *a, ...) {
+extern int aa_x_remove(struct aa *a,
+#ifdef _WIN32
+                       size_t n_memb,
+#endif
+                       ...) {
     va_list args;
+#ifdef _WIN32
+    va_start(args, n_memb);
+#else
     va_start(args);
+#endif
     aa_key_t key = va_arg(args, aa_key_t);
     va_end(args);
 

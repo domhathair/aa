@@ -36,7 +36,7 @@ int main(void) {
     assert(aa_get(a, "Valentina", &value) == 0);
     printf("Valentina is %s\n", value.gender == MALE ? "male" : "female");
 
-    printf("Heap of a[%zu]: %lu\n", a->used, _Allocated_memory);
+    printf("Heap of a[%zu]: %zu\n", a->used, _Allocated_memory);
 
     assert(aa_remove(a, "Maria") == 0);
     printf("Maria is %s\n",
