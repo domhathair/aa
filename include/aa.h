@@ -42,7 +42,7 @@
 
 #ifndef SIZE_WIDTH
 #if defined(_WIN32) && !defined(__WORDSIZE)
-#ifndef _WIN64
+#ifdef _WIN64
 #define __WORDSIZE 64
 #else
 #define __WORDSIZE 32
@@ -73,7 +73,7 @@ enum {
     /* Magic hash constants to distinguish empty, deleted, and filled buckets */
     AA_HASH_EMPTY = 0,
     AA_HASH_DELETED = 1,
-    AA_HASH_FILLED = 1UL << (SIZE_WIDTH - 1)
+    AA_HASH_FILLED = (size_t)1 << (SIZE_WIDTH - 1)
 };
 
 #ifndef IS_POINTER
